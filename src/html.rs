@@ -35,7 +35,6 @@ pub struct NavigationContext {
 #[derive(Serialize)]
 pub struct SiteContext {
     pub replacements: Vec<ReplacementContext>,
-    pub num_replacements: usize,
     pub timestamp: u64,
     pub page: u32,
     pub navigation: NavigationContext,
@@ -151,11 +150,11 @@ pub static TEMPLATE_SITE: &str = r###"
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
     <title>Recent full-RBF replacements {{ if page }}(page {page}){{ endif }} - mempool.observer</title>
   </head>
-  <body>
+  <body class="container-fluid">
 
   <header>
-    <nav class="navbar border-bottom mb-5">
-        <div class="container">
+    <nav class="navbar border-bottom mb-3">
+        <div class="">
             <span class="d-inline-block navbar-brand">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 143.05 37.854" height="70" width="300">
                     <g class="text" aria-label="mem" style="line-height:.01%" fill="#1a1a1a" font-family="Laksaman" font-size="25.4" font-weight="400" letter-spacing="0" word-spacing="0">
@@ -184,38 +183,42 @@ pub static TEMPLATE_SITE: &str = r###"
     </nav>
   </header>
 
-  <main class="container">
-    <h1>Recent full-RBF replacements {{if page }}(page {page}){{ endif }}</h1>
-    <p>
-        Showing {num_replacements} of the most recent full-RBF replacement events my <code>mempoolfullrbf=1</code> node saw. I assume that a replacement is a full-RBF replacement, if the replaced transaction does not signal BIP-125 replaceability.
-    </p>
+  <main>
 
-    <p>
-        Transactions that confirmed in a block (queried from the blockstream.info API) are labeled as <span class="badge text-bg-warning">mined in X</span>.
-    </p>
+    <div class="container-sm">
+        <h1 class="lh-1 mb-3">Recent full-RBF replacements {{if page }}(page {page}){{ endif }}</h1>
+        <p class="lead">
+            Showing recent full-RBF replacement events my <code>mempoolfullrbf=1</code> node saw.
+        </p>
 
-    {{- call tmpl_navigation with navigation -}}
-
-    <div class="row px-3">
-        <div class="col-4">
-            <h2>replaced</h2>
-        </div>
-        <div class="col-4"></div>
-        <div class="col-4">
-            <h2>replacement</h2>
-        </div>
+        <p>
+            I assume that a replacement is a full-RBF replacement, if the replaced transaction does not signal BIP-125 replaceability.
+            Transactions that confirmed in a block (queried from the blockstream.info API) are labeled as <span class="badge text-bg-warning">mined in X</span>.
+        </p>
     </div>
 
-    {{ for replacement in replacements }}
-        <div class="card m-3">
-            {{- call tmpl_replacement with replacement -}}
+    <div class="mx-5">
+        <div class="row px-3">
+            <div class="col-4">
+                <h2>replaced</h2>
+            </div>
+            <div class="col-4"></div>
+            <div class="col-4">
+                <h2>replacement</h2>
+            </div>
         </div>
-    {{ endfor }}
 
-    {{- call tmpl_navigation with navigation -}}
+        {{ for replacement in replacements }}
+            <div class="card m-3">
+                {{- call tmpl_replacement with replacement -}}
+            </div>
+        {{ endfor }}
+
+        {{- call tmpl_navigation with navigation -}}
+    </div>
 
   </main>
-  <footer class="container text-muted border-top">
+  <footer class="text-muted border-top">
     <p>
         by <a href="https://b10c.me">0xb10c</a> | site generated at <span class="timestamp" aria-timestamp="{timestamp}">timestamp</span> with <a href="https://github.com/0xB10C/mempool-observer-fullrbf-ui">github.com/0xB10C/mempool-observer-fullrbf-ui</a>
     </p>

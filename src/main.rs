@@ -163,7 +163,6 @@ fn generate_html_files(replacements: Vec<html::ReplacementContext>, html_output_
                 "tmpl_site",
                 &html::SiteContext {
                     replacements: chunk.to_vec(),
-                    num_replacements: chunk.len(),
                     timestamp,
                     page,
                     navigation: html::NavigationContext {
