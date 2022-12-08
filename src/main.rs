@@ -63,6 +63,7 @@ fn build_replacement_context(
 }
 
 fn get_reverse_fullrbf_replacements(csv_file_path: &str) -> Vec<html::ReplacementContext> {
+    println!("Reading replacements from {}", csv_file_path);
     let mut rdr = csv::Reader::from_path(csv_file_path).unwrap();
     let mut replacements: Vec<html::ReplacementContext> = Vec::new();
 
@@ -82,12 +83,13 @@ fn get_reverse_fullrbf_replacements(csv_file_path: &str) -> Vec<html::Replacemen
         }
     }
 
+    println!("Read {} full-rbf replacements from {}", replacements.len(), csv_file_path);
     replacements.reverse();
     replacements
 }
 
 fn generate_html_files(replacements: Vec<html::ReplacementContext>, html_output_dir: &str) {
-
+    println!("Generating HTML files to {} ...", html_output_dir);
     let mut tt = TinyTemplate::new();
     tt.add_template("tmpl_transaction", html::TEMPLATE_TX)
         .unwrap();
@@ -109,6 +111,7 @@ fn generate_html_files(replacements: Vec<html::ReplacementContext>, html_output_
     ));
 
     for (page, chunk) in (0_u32..).zip(replacements.chunks(REPLACEMENT_EVENTS_PER_PAGE as usize)) {
+        println!("... rendering page {}", page);
         let rendered = tt
             .render(
                 "tmpl_site",
@@ -122,8 +125,9 @@ fn generate_html_files(replacements: Vec<html::ReplacementContext>, html_output_
             )
             .unwrap();
 
-        let mut file =
-            File::create(format!("{}/{}.html", html_output_dir, get_filename(page))).unwrap();
+        let filename = format!("{}/{}.html", html_output_dir, get_filename(page));
+        println!("... writing page {} to {}", page, filename);
+        let mut file = File::create(filename).unwrap();
         write!(file, "{}", rendered).unwrap();
     }
 }
@@ -141,6 +145,7 @@ fn main() {
     let replacements = get_reverse_fullrbf_replacements(csv_file_path);
 
     generate_html_files(replacements, html_output_dir);
+    println!("Done generating pages");
 }
 
 fn sequence(n: u32) -> Vec<u32> {
