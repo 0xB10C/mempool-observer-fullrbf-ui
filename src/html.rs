@@ -201,7 +201,7 @@ pub static TEMPLATE_SITE: &str = r###"
     <p>
         by <a href="https://b10c.me">0xb10c</a> | site generated at <span class="timestamp" aria-timestamp="{timestamp}">timestamp</span> with <a href="https://github.com/0xB10C/mempool-observer-fullrbf-ui">github.com/0xB10C/mempool-observer-fullrbf-ui</a>
     </p>
-    </footer>
+  </footer>
 
 <script>
 
@@ -225,9 +225,9 @@ pub static TEMPLATE_SITE: &str = r###"
                         badge.setAttribute("href", "https://miningpool.observer/template-and-block/"+response.status.block_hash)
                     } else \{
                         badge.innerHTML = "in blockstream.info mempool";
+                        console.log(response);
                     }
                 }
-                console.log(response)
             }
         );
     }
