@@ -106,7 +106,7 @@ pub static TEMPLATE_PAGE_NAVIGATION: &str = r###"
         {{ for page in pages }}
             {{ if not page }}
                 <li class="page-item">
-                    <a href="index.html">
+                    <a href="/">
                         <span class="page-link">{page}</span>
                     </a>
                 </li>
