@@ -169,6 +169,16 @@ pub static TEMPLATE_SITE: &str = r###"
         </ul>
     </nav>
 
+    <div class="row px-3">
+        <div class="col-4">
+            <h2>replaced</h2>
+        </div>
+        <div class="col-4"></div>
+        <div class="col-4">
+            <h2>replacement</h2>
+        </div>
+    </div>
+
     {{ for replacement in replacements }}
         <div class="card m-3">
             {{- call tmpl_replacement with replacement -}}
