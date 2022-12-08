@@ -97,13 +97,13 @@ pub static TEMPLATE_DELTAS: &str = r#"
 pub static TEMPLATE_REPLACEMENT: &str = r#"
 <div class="card-body">
     <div class="row">
-        <div class="col-4">
+        <div class="col-5">
             {{- call tmpl_transaction with replaced -}}
         </div>
-        <div class="col-4">
+        <div class="col-2">
             {{- call tmpl_deltas with deltas -}}
         </div>
-        <div class="col-4">
+        <div class="col-5">
             {{- call tmpl_transaction with replacement -}}
         </div>
     </div>
