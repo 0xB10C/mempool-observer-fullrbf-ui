@@ -26,12 +26,17 @@ pub struct ReplacementContext {
 }
 
 #[derive(Serialize)]
+pub struct NavigationContext {
+    pub pages: Vec<u32>,
+}
+
+#[derive(Serialize)]
 pub struct SiteContext {
     pub replacements: Vec<ReplacementContext>,
     pub num_replacements: usize,
     pub timestamp: u64,
     pub page: u32,
-    pub pages: Vec<u32>,
+    pub navigation: NavigationContext,
 }
 
 pub static TEMPLATE_TX: &str = r###"
@@ -95,6 +100,28 @@ pub static TEMPLATE_REPLACEMENT: &str = r#"
 </div>
 "#;
 
+pub static TEMPLATE_PAGE_NAVIGATION: &str = r###"
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+        {{ for page in pages }}
+            {{ if not page }}
+                <li class="page-item">
+                    <a href="index.html">
+                        <span class="page-link">{page}</span>
+                    </a>
+                </li>
+            {{ else }}
+                <li class="page-item">
+                    <a href="page_{page}.html">
+                        <span class="page-link">{page}</span>
+                    </a>
+                </li>
+            {{ endif }}
+        {{ endfor }}
+    </ul>
+</nav>
+"###;
+
 pub static TEMPLATE_SITE: &str = r###"
 <!doctype html>
 <html lang="en">
@@ -149,25 +176,7 @@ pub static TEMPLATE_SITE: &str = r###"
         Transactions that confirmed in a block (queried from the blockstream.info API) are labeled as <span class="badge text-bg-warning">mined in X</span>.
     </p>
 
-    <nav aria-label="Page navigation">
-        <ul class="pagination justify-content-start">
-            {{ for page in pages }}
-                {{ if not page }}
-                    <li class="page-item">
-                        <a href="index.html">
-                            <span class="page-link">{page}</span>
-                        </a>
-                    </li>
-                {{ else }}
-                    <li class="page-item">
-                        <a href="page_{page}.html">
-                            <span class="page-link">{page}</span>
-                        </a>
-                    </li>
-                {{ endif }}
-            {{ endfor }}
-        </ul>
-    </nav>
+    {{- call tmpl_navigation with navigation -}}
 
     <div class="row px-3">
         <div class="col-4">
@@ -185,25 +194,7 @@ pub static TEMPLATE_SITE: &str = r###"
         </div>
     {{ endfor }}
 
-    <nav aria-label="Page navigation">
-        <ul class="pagination justify-content-center">
-            {{ for page in pages }}
-                {{ if not page }}
-                    <li class="page-item">
-                        <a href="index.html">
-                            <span class="page-link">{page}</span>
-                        </a>
-                    </li>
-                {{ else }}
-                    <li class="page-item">
-                        <a href="page_{page}.html">
-                            <span class="page-link">{page}</span>
-                        </a>
-                    </li>
-                {{ endif }}
-            {{ endfor }}
-        </ul>
-    </nav>
+    {{- call tmpl_navigation with navigation -}}
 
   </main>
   <footer class="container text-muted border-top">

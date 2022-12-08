@@ -95,6 +95,7 @@ fn generate_html_files(replacements: Vec<html::ReplacementContext>, html_output_
         .unwrap();
     tt.add_template("tmpl_replacement", html::TEMPLATE_REPLACEMENT)
         .unwrap();
+    tt.add_template("tmpl_navigation", html::TEMPLATE_PAGE_NAVIGATION).unwrap();
     tt.add_template("tmpl_site", html::TEMPLATE_SITE).unwrap();
 
     let timestamp = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
@@ -116,7 +117,7 @@ fn generate_html_files(replacements: Vec<html::ReplacementContext>, html_output_
                     num_replacements: chunk.len(),
                     timestamp,
                     page,
-                    pages: pages.clone(),
+                    navigation: html::NavigationContext{pages: pages.clone()},
                 },
             )
             .unwrap();
