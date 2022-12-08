@@ -71,10 +71,8 @@ pub static TEMPLATE_TX: &str = r###"
         </ul>
     </details>
     <details class="col-12">
-        <summary>
-            raw transaction
-        </summary>
-        <pre>{raw}</pre>
+        <summary>raw transaction</summary>
+        <div style="white-space: pre-wrap;"><code>{raw}</code></div>
     </details>
 </div>
 "###;
