@@ -169,7 +169,7 @@ pub static TEMPLATE_SITE: &str = r###"
   <main class="container">
     <h1>Recent full-RBF replacements {{if page }}(page {page}){{ endif }}</h1>
     <p>
-        Showing up to {num_replacements} of the most recent full-RBF replacement events my <code>mempoolfullrbf=1</code> node saw. I assume that a replacement is a full-RBF replacement, if the replaced transaction does not signal BIP-125 replaceability.
+        Showing {num_replacements} of the most recent full-RBF replacement events my <code>mempoolfullrbf=1</code> node saw. I assume that a replacement is a full-RBF replacement, if the replaced transaction does not signal BIP-125 replaceability.
     </p>
 
     <p>
