@@ -1,10 +1,10 @@
 use std::cmp::min;
+use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::process::exit;
 use std::time::SystemTime;
-use std::collections::HashMap;
 
 use tinytemplate::TinyTemplate;
 
@@ -19,7 +19,6 @@ use rawtx_rs::{input::InputType, output::OutputType};
 
 const REPLACEMENT_EVENTS_PER_PAGE: u32 = 100;
 const MAX_PAGES: u32 = 10;
-
 
 fn in_and_outputs_to_strings(txinfo: &TxInfo) -> (Vec<String>, Vec<String>) {
     let mut output_type_counts: HashMap<OutputType, u32> = HashMap::new();
@@ -61,7 +60,8 @@ fn build_replacement_context(
     let replacement_txinfo = TxInfo::new(replacement_tx).unwrap();
 
     let (replaced_input_infos, repalced_output_infos) = in_and_outputs_to_strings(&replaced_txinfo);
-    let (replacement_input_infos, repalcement_output_infos) = in_and_outputs_to_strings(&replacement_txinfo);
+    let (replacement_input_infos, repalcement_output_infos) =
+        in_and_outputs_to_strings(&replacement_txinfo);
 
     html::ReplacementContext {
         timestamp: event.timestamp,
@@ -124,7 +124,11 @@ fn get_reverse_fullrbf_replacements(csv_file_path: &str) -> Vec<html::Replacemen
         }
     }
 
-    println!("Read {} full-rbf replacements from {}", replacements.len(), csv_file_path);
+    println!(
+        "Read {} full-rbf replacements from {}",
+        replacements.len(),
+        csv_file_path
+    );
     replacements.reverse();
     replacements
 }
@@ -138,7 +142,8 @@ fn generate_html_files(replacements: Vec<html::ReplacementContext>, html_output_
         .unwrap();
     tt.add_template("tmpl_replacement", html::TEMPLATE_REPLACEMENT)
         .unwrap();
-    tt.add_template("tmpl_navigation", html::TEMPLATE_PAGE_NAVIGATION).unwrap();
+    tt.add_template("tmpl_navigation", html::TEMPLATE_PAGE_NAVIGATION)
+        .unwrap();
     tt.add_template("tmpl_site", html::TEMPLATE_SITE).unwrap();
 
     let timestamp = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
@@ -161,7 +166,9 @@ fn generate_html_files(replacements: Vec<html::ReplacementContext>, html_output_
                     num_replacements: chunk.len(),
                     timestamp,
                     page,
-                    navigation: html::NavigationContext{pages: pages.clone()},
+                    navigation: html::NavigationContext {
+                        pages: pages.clone(),
+                    },
                 },
             )
             .unwrap();
