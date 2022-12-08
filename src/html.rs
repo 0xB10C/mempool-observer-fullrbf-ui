@@ -1,6 +1,8 @@
+use std::hash::{Hash, Hasher};
+
 use serde::Serialize;
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 pub struct TransactionContext {
     pub txid: String,
     pub fee: u64,
@@ -12,8 +14,22 @@ pub struct TransactionContext {
     pub op_return: bool,
 }
 
+impl Hash for TransactionContext {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.txid.hash(state);
+    }
+}
+
+impl PartialEq for TransactionContext {
+    fn eq(&self, other: &Self) -> bool {
+        self.txid == other.txid
+    }
+}
+
+impl Eq for TransactionContext {}
+
 #[derive(Serialize, Clone)]
-pub struct ReplacementDeltaContext {
+pub struct ReplacementGroupDeltaContext {
     pub fee: i64,
     pub vsize: i64,
     pub feerate: String,
@@ -24,7 +40,14 @@ pub struct ReplacementContext {
     pub timestamp: u64,
     pub replaced: TransactionContext,
     pub replacement: TransactionContext,
-    pub deltas: ReplacementDeltaContext,
+}
+
+#[derive(Serialize, Clone)]
+pub struct ReplacementGroupContext {
+    pub timestamp: u64,
+    pub replaced: Vec<TransactionContext>,
+    pub replacement: TransactionContext,
+    pub delta: ReplacementGroupDeltaContext,
 }
 
 #[derive(Serialize)]
@@ -34,7 +57,7 @@ pub struct NavigationContext {
 
 #[derive(Serialize)]
 pub struct SiteContext {
-    pub replacements: Vec<ReplacementContext>,
+    pub replacements: Vec<ReplacementGroupContext>,
     pub timestamp: u64,
     pub page: u32,
     pub navigation: NavigationContext,
@@ -48,69 +71,76 @@ pub static TEMPLATE_TX: &str = r###"
         {{ endif }}
         <a href="#" class="badge text-bg-light badge-mined text-decoration-none" target="_blank" aria-txid="{txid}">loading..</a>
     </div>
-    <div class="col-12 text-truncate">
-        {txid}
-    </div>
     <div class="col-12">
-        {feerate} sat/vByte ({fee}sat, {vsize} vByte)
+        <div class="row">
+            <span class="col-12 text-truncate">{txid}</span>
+            <span class="col-md-2 col-4 text-muted">feerate</span><span class="col-md-4 col-8">{feerate} sat/vByte</span>
+            <span class="col-md-2 col-4 text-muted">fee</span><span class="col-md-4 col-8">{fee} sat</span>
+            <span class="col-md-2 col-4 text-muted">vsize</span><span class="col-md-4 col-8">{vsize} vByte</span>
+            <span class="col-md-2 col-4 text-muted"></span><span class="col-md-4 col-8"></span>
+            <span class="col-md-2 col-4 text-muted">inputs</span><span class="col-md-10 col-8">{{ for input in inputs }}{input}{{ if not @last }}, {{ endif }}{{ endfor }}</span>
+            <span class="col-md-2 col-4 text-muted">outputs</span><span class="col-md-10 col-8">{{ for output in outputs }}{output}{{ if not @last }}, {{ endif }}{{ endfor }}</span>
+        </div>
+        <details>
+            <summary>raw transaction</summary>
+            <div style="white-space: pre-wrap;"><code>{raw}</code></div>
+        </details>
     </div>
-    <details class="col-6">
-        <summary>inputs</summary>
-        <ul class="list-group">
-            {{ for input in inputs }}
-                <li class="list-group-item">{input}</li>
-            {{ endfor }}
-        </ul>
-    </details>
-    <details class="col-6">
-        <summary>outputs</summary>
-        <ul class="list-group">
-            {{ for output in outputs }}
-                <li class="list-group-item">{output}</li>
-            {{ endfor }}
-        </ul>
-    </details>
-    <details class="col-12">
-        <summary>raw transaction</summary>
-        <div style="white-space: pre-wrap;"><code>{raw}</code></div>
-    </details>
 </div>
 "###;
 
 pub static TEMPLATE_DELTAS: &str = r#"
 <div class="row text-center">
-    <div class="col-12">
-        <span style="font-size: 6em; line-height:0.4em; color: gray">→</span>
-    </div>
+    <span class="d-xl-none" style="font-size: 6em; line-height: 1em; color: gray">↓</span>
+    <span class="d-none d-xl-block" style="font-size: 6em; line-height:1em; color: gray">➜</span>
     <div class="col-12">
         <span>+{fee} sat</span>
-        {{ if vsize }}
-            <span>{vsize} vByte</span>
-        {{ endif }}
     </div>
+    {{ if vsize }}
+        <div class="col-12">
+            <span>{vsize} vByte</span>
+        </div>
+    {{ endif }}
     <div class="col-12">
-        <span>+{feerate} sat/vByte</span>
+        <span>{feerate}</span>
     </div>
 </div>
 "#;
 
 pub static TEMPLATE_REPLACEMENT: &str = r#"
-<div class="card-body">
-    <div class="row">
-        <div class="col-5">
-            {{- call tmpl_transaction with replaced -}}
-        </div>
-        <div class="col-2">
-            {{- call tmpl_deltas with deltas -}}
-        </div>
-        <div class="col-5">
-            {{- call tmpl_transaction with replacement -}}
-        </div>
+<div class="card-header">
+    <div class="col-12">
+        full RBF event at
+        <span class="timestamp" aria-timestamp="{timestamp}">timestamp</span>
     </div>
 </div>
-<div class="card-footer">
-    <div class="col-12">
-        <span class="timestamp" aria-timestamp="{timestamp}">timestamp</span>
+<div class="card-body">
+    <div class="row">
+        <div class="col-xl-5 col-12">
+            <ul class="list-group list-group">
+                <li class="list-group-item">
+                    <span>replaced</span>
+                </li>
+                {{ for tx in replaced }}
+                    <li class="list-group-item">
+                        {{- call tmpl_transaction with tx -}}
+                    </li>
+                {{ endfor }}
+            </ul>
+        </div>
+        <div class="col-xl-2 col-12">
+            {{- call tmpl_deltas with delta -}}
+        </div>
+        <div class="col-xl-5 col-12">
+            <ul class="list-group list-group">
+                <li class="list-group-item">
+                    <span>replacement</span>
+                </li>
+                <li class="list-group-item">
+                    {{- call tmpl_transaction with replacement -}}
+                </li>
+            </ul>
+        </div>
     </div>
 </div>
 "#;
@@ -183,29 +213,18 @@ pub static TEMPLATE_SITE: &str = r###"
 
   <main>
 
-    <div class="container-sm">
+    <div class="container-fluid mx-lg-5">
         <h1 class="lh-1 mb-3">Recent full-RBF replacements {{if page }}(page {page}){{ endif }}</h1>
         <p class="lead">
             Showing recent full-RBF replacement events my <code>mempoolfullrbf=1</code> node saw.
         </p>
-
         <p>
             I assume that a replacement is a full-RBF replacement, if the replaced transaction does not signal BIP-125 replaceability.
             Transactions that confirmed in a block (queried from the blockstream.info API) are labeled as <span class="badge text-bg-warning">mined in X</span>.
         </p>
     </div>
 
-    <div class="mx-5">
-        <div class="row px-3">
-            <div class="col-4">
-                <h2>replaced</h2>
-            </div>
-            <div class="col-4"></div>
-            <div class="col-4">
-                <h2>replacement</h2>
-            </div>
-        </div>
-
+    <div class="mx-lg-5">
         {{ for replacement in replacements }}
             <div class="card m-3">
                 {{- call tmpl_replacement with replacement -}}
@@ -217,7 +236,7 @@ pub static TEMPLATE_SITE: &str = r###"
 
   </main>
   <footer class="text-muted border-top">
-    <p>
+    <p class="mx-lg-5">
         by <a href="https://b10c.me">0xb10c</a> | site generated at <span class="timestamp" aria-timestamp="{timestamp}">timestamp</span> with <a href="https://github.com/0xB10C/mempool-observer-fullrbf-ui">github.com/0xB10C/mempool-observer-fullrbf-ui</a>
     </p>
   </footer>

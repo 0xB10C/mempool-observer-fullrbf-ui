@@ -17,7 +17,7 @@ use rawtx_rs::bitcoin;
 use rawtx_rs::tx::TxInfo;
 use rawtx_rs::{input::InputType, output::OutputType};
 
-const REPLACEMENT_EVENTS_PER_PAGE: u32 = 100;
+const REPLACEMENT_GROUPS_PER_PAGE: u32 = 50;
 const MAX_PAGES: u32 = 10;
 
 fn in_and_outputs_to_strings(txinfo: &TxInfo) -> (Vec<String>, Vec<String>) {
@@ -78,15 +78,6 @@ fn build_replacement_context(
             inputs: replaced_input_infos,
             outputs: repalced_output_infos,
         },
-        deltas: html::ReplacementDeltaContext {
-            fee: event.replacement_fee as i64 - event.replaced_fee as i64,
-            vsize: event.replacement_vsize as i64 - event.replaced_vsize as i64,
-            feerate: format!(
-                "{:.2}",
-                (event.replacement_fee as f64 / event.replacement_vsize as f64)
-                    - (event.replaced_fee as f64 / event.replaced_vsize as f64)
-            ),
-        },
         replacement: html::TransactionContext {
             txid: replacement_tx.txid().to_string(),
             fee: event.replacement_fee,
@@ -133,7 +124,7 @@ fn get_reverse_fullrbf_replacements(csv_file_path: &str) -> Vec<html::Replacemen
     replacements
 }
 
-fn generate_html_files(replacements: Vec<html::ReplacementContext>, html_output_dir: &str) {
+fn generate_html_files(replacements: Vec<html::ReplacementGroupContext>, html_output_dir: &str) {
     println!("Generating HTML files to {} ...", html_output_dir);
     let mut tt = TinyTemplate::new();
     tt.add_template("tmpl_transaction", html::TEMPLATE_TX)
@@ -152,11 +143,11 @@ fn generate_html_files(replacements: Vec<html::ReplacementContext>, html_output_
     };
 
     let pages = sequence(min(
-        (replacements.len() as f32 / REPLACEMENT_EVENTS_PER_PAGE as f32) as u32 + 1,
+        (replacements.len() as f32 / REPLACEMENT_GROUPS_PER_PAGE as f32) as u32 + 1,
         MAX_PAGES,
     ));
 
-    for (page, chunk) in (0_u32..).zip(replacements.chunks(REPLACEMENT_EVENTS_PER_PAGE as usize)) {
+    for (page, chunk) in (0_u32..).zip(replacements.chunks(REPLACEMENT_GROUPS_PER_PAGE as usize)) {
         println!("... rendering page {}", page);
         let rendered = tt
             .render(
@@ -190,8 +181,50 @@ fn main() {
     let html_output_dir = &args[2];
 
     let replacements = get_reverse_fullrbf_replacements(csv_file_path);
+    let mut replacement_groups: HashMap<
+        (html::TransactionContext, u64),
+        Vec<html::TransactionContext>,
+    > = HashMap::new();
 
-    generate_html_files(replacements, html_output_dir);
+    for replacement_event in replacements.iter() {
+        match replacement_groups.get_mut(&(
+            replacement_event.replacement.clone(),
+            replacement_event.timestamp,
+        )) {
+            None => {
+                replacement_groups.insert(
+                    (
+                        replacement_event.replacement.clone(),
+                        replacement_event.timestamp,
+                    ),
+                    vec![replacement_event.replaced.clone()],
+                );
+            }
+            Some(x) => x.push(replacement_event.replaced.clone()),
+        }
+    }
+
+    let mut replacement_group_contexts: Vec<html::ReplacementGroupContext> = replacement_groups
+        .iter()
+        .map(|(k, v)| html::ReplacementGroupContext {
+            replaced: v.to_vec(),
+            replacement: k.0.clone(),
+            timestamp: k.1,
+            delta: html::ReplacementGroupDeltaContext {
+                fee: k.0.fee as i64 - v.iter().map(|tx| tx.fee).sum::<u64>() as i64,
+                vsize: k.0.vsize as i64 - v.iter().map(|tx| tx.vsize).sum::<u64>() as i64,
+                feerate: if v.len() > 1 { String::new() } else {format!(
+                    "+{:.2} sat/vByte",
+                    (k.0.fee as f64) / (k.0.vsize as f64)
+                        - (v.iter().map(|tx| tx.fee).sum::<u64>() as f64
+                            / v.iter().map(|tx| tx.vsize).sum::<u64>() as f64)
+                )},
+            },
+        })
+        .collect();
+    replacement_group_contexts.sort_by_key(|k| k.timestamp);
+
+    generate_html_files(replacement_group_contexts, html_output_dir);
     println!("Done generating pages");
 }
 
