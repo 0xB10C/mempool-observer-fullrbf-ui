@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::Write;
 use std::process::exit;
 use std::time::SystemTime;
+use std::collections::HashMap;
 
 use tinytemplate::TinyTemplate;
 
@@ -12,14 +13,56 @@ mod types;
 
 use types::RBFEvent;
 
+use rawtx_rs::bitcoin;
+use rawtx_rs::tx::TxInfo;
+use rawtx_rs::{input::InputType, output::OutputType};
+
 const REPLACEMENT_EVENTS_PER_PAGE: u32 = 100;
 const MAX_PAGES: u32 = 10;
+
+
+fn in_and_outputs_to_strings(txinfo: &TxInfo) -> (Vec<String>, Vec<String>) {
+    let mut output_type_counts: HashMap<OutputType, u32> = HashMap::new();
+    for ot in txinfo.output_infos.iter().map(|i| i.out_type) {
+        if let Some(count) = output_type_counts.clone().get(&ot) {
+            output_type_counts.insert(ot, *count + 1);
+        } else {
+            output_type_counts.insert(ot, 1);
+        }
+    }
+
+    let mut input_type_counts: HashMap<InputType, u32> = HashMap::new();
+    for it in txinfo.input_infos.iter().map(|i| i.in_type) {
+        if let Some(count) = input_type_counts.clone().get(&it) {
+            input_type_counts.insert(it, *count + 1);
+        } else {
+            input_type_counts.insert(it, 1);
+        }
+    }
+
+    let inputs_strs: Vec<String> = input_type_counts
+        .iter()
+        .map(|(k, v)| format!("{}x {}", v, k))
+        .collect();
+    let outputs_strs: Vec<String> = output_type_counts
+        .iter()
+        .map(|(k, v)| format!("{}x {}", v, k))
+        .collect();
+
+    (inputs_strs, outputs_strs)
+}
 
 fn build_replacement_context(
     event: &RBFEvent,
     replaced_tx: &bitcoin::Transaction,
     replacement_tx: &bitcoin::Transaction,
 ) -> html::ReplacementContext {
+    let replaced_txinfo = TxInfo::new(replaced_tx).unwrap();
+    let replacement_txinfo = TxInfo::new(replacement_tx).unwrap();
+
+    let (replaced_input_infos, repalced_output_infos) = in_and_outputs_to_strings(&replaced_txinfo);
+    let (replacement_input_infos, repalcement_output_infos) = in_and_outputs_to_strings(&replacement_txinfo);
+
     html::ReplacementContext {
         timestamp: event.timestamp,
         replaced: html::TransactionContext {
@@ -30,11 +73,10 @@ fn build_replacement_context(
                 "{:.2}",
                 event.replaced_fee as f64 / event.replaced_vsize as f64
             ),
-            op_return: replaced_tx
-                .output
-                .iter()
-                .any(|o| o.script_pubkey.is_op_return()),
+            op_return: replaced_txinfo.has_opreturn_output(),
             raw: hex::encode(&event.replaced_raw),
+            inputs: replaced_input_infos,
+            outputs: repalced_output_infos,
         },
         deltas: html::ReplacementDeltaContext {
             fee: event.replacement_fee as i64 - event.replaced_fee as i64,
@@ -53,11 +95,10 @@ fn build_replacement_context(
                 "{:.2}",
                 (event.replacement_fee as f64 / event.replacement_vsize as f64)
             ),
-            op_return: replaced_tx
-                .output
-                .iter()
-                .any(|o| o.script_pubkey.is_op_return()),
+            op_return: replaced_txinfo.has_opreturn_output(),
             raw: hex::encode(&event.replacement_raw),
+            inputs: replacement_input_infos,
+            outputs: repalcement_output_infos,
         },
     }
 }

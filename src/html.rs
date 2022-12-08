@@ -7,6 +7,8 @@ pub struct TransactionContext {
     pub vsize: u64,
     pub feerate: String,
     pub raw: String,
+    pub inputs: Vec<String>,
+    pub outputs: Vec<String>,
     pub op_return: bool,
 }
 
@@ -53,6 +55,22 @@ pub static TEMPLATE_TX: &str = r###"
     <div class="col-12">
         {feerate} sat/vByte ({fee}sat, {vsize} vByte)
     </div>
+    <details class="col-6">
+        <summary>inputs</summary>
+        <ul class="list-group">
+            {{ for input in inputs }}
+                <li class="list-group-item">{input}</li>
+            {{ endfor }}
+        </ul>
+    </details>
+    <details class="col-6">
+        <summary>outputs</summary>
+        <ul class="list-group">
+            {{ for output in outputs }}
+                <li class="list-group-item">{output}</li>
+            {{ endfor }}
+        </ul>
+    </details>
     <details class="col-12">
         <summary>
             raw transaction
