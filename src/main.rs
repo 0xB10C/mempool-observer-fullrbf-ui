@@ -39,14 +39,20 @@ fn in_and_outputs_to_strings(txinfo: &TxInfo) -> (Vec<String>, Vec<String>) {
         }
     }
 
-    let inputs_strs: Vec<String> = input_type_counts
+    let mut inputs_strs: Vec<String> = input_type_counts
         .iter()
         .map(|(k, v)| format!("{}x {}", v, k))
         .collect();
-    let outputs_strs: Vec<String> = output_type_counts
+    let mut outputs_strs: Vec<String> = output_type_counts
         .iter()
         .map(|(k, v)| format!("{}x {}", v, k))
         .collect();
+
+    // Rust 'randomizes' the order of elements is HashMaps to make sure people
+    // don't rely on the order. For us it's nicer to have them always sorted to
+    // be able to better compare them.
+    inputs_strs.sort();
+    outputs_strs.sort();
 
     (inputs_strs, outputs_strs)
 }
