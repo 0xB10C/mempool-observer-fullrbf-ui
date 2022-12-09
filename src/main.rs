@@ -255,7 +255,10 @@ fn main() {
     let replacements = get_reverse_fullrbf_replacements(csv_file_path);
     let replacement_group_contexts = build_replacement_groups(replacements);
 
+    let replacement_group_contexts_without_opreturn = replacement_group_contexts.iter().filter(|r| !r.replacement.op_return).cloned().collect();
+
     generate_html_files(replacement_group_contexts, html_output_dir);
+    generate_html_files(replacement_group_contexts_without_opreturn, &format!("{}/no_opreturn", html_output_dir));
     println!("Done generating pages");
 }
 
