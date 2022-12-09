@@ -225,6 +225,8 @@ pub static TEMPLATE_SITE: &str = r###"
         <p>
             I assume that a replacement is a full-RBF replacement, if the replaced transaction does not signal BIP-125 replaceability and the replaced transaction directly conflicts with the replacement*.
             Transactions that confirmed in a block (queried from the blockstream.info API) are labeled as <span class="badge text-bg-warning">mined in X</span>.
+            Clicking on the badge shows the block and the pool (if known) that mined the transaction.
+            A replacement being mined could mean, that the pool has full-RBF enabled.
         </p>
         <p class="small text-muted">
             *There are cases where a child does not signal optin-RBF, but can still be replaced if a parent is replaced. This is not a full-RBF replacement though.
