@@ -105,7 +105,7 @@ fn get_reverse_fullrbf_replacements(csv_file_path: &str) -> Vec<html::Replacemen
             bitcoin::consensus::encode::deserialize(&event.replaced_raw).unwrap();
         let replacement_tx: bitcoin::Transaction =
             bitcoin::consensus::encode::deserialize(&event.replacement_raw).unwrap();
-        let optin_rbf = replaced_tx.input.iter().all(|i| i.sequence.is_rbf());
+        let optin_rbf = replaced_tx.input.iter().any(|i| i.sequence.is_rbf());
         if !optin_rbf {
             replacements.push(build_replacement_context(
                 &event,
