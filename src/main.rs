@@ -86,7 +86,7 @@ fn build_replacement_context(
                 "{:.2}",
                 (event.replacement_fee as f64 / event.replacement_vsize as f64)
             ),
-            op_return: replaced_txinfo.has_opreturn_output(),
+            op_return: replacement_txinfo.has_opreturn_output(),
             raw: hex::encode(&event.replacement_raw),
             inputs: replacement_input_infos,
             outputs: repalcement_output_infos,
