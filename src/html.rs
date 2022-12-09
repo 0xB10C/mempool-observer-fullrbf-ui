@@ -12,6 +12,7 @@ pub struct TransactionContext {
     pub inputs: Vec<String>,
     pub outputs: Vec<String>,
     pub op_return: bool,
+    pub optin_rbf: bool,
 }
 
 impl Hash for TransactionContext {
@@ -66,8 +67,11 @@ pub struct SiteContext {
 pub static TEMPLATE_TX: &str = r###"
 <div class="row">
     <div class="col-12">
-        {{ if op_return}}
+        {{ if op_return }}
             <span class="badge text-bg-secondary">OP_RETURN</span>
+        {{ endif }}
+        {{ if optin_rbf }}
+            <span class="badge text-bg-primary">opt-in RBF</span>
         {{ endif }}
         <a href="#" class="badge text-bg-light badge-mined text-decoration-none" target="_blank" aria-txid="{txid}">loading..</a>
     </div>

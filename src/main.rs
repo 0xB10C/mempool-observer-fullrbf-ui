@@ -75,6 +75,7 @@ fn build_replacement_context(
             ),
             op_return: replaced_txinfo.has_opreturn_output(),
             raw: hex::encode(&event.replaced_raw),
+            optin_rbf: replaced_txinfo.is_signaling_explicit_rbf_replicability(),
             inputs: replaced_input_infos,
             outputs: repalced_output_infos,
         },
@@ -87,6 +88,7 @@ fn build_replacement_context(
                 (event.replacement_fee as f64 / event.replacement_vsize as f64)
             ),
             op_return: replacement_txinfo.has_opreturn_output(),
+            optin_rbf: replacement_txinfo.is_signaling_explicit_rbf_replicability(),
             raw: hex::encode(&event.replacement_raw),
             inputs: replacement_input_infos,
             outputs: repalcement_output_infos,
