@@ -1,5 +1,5 @@
 use std::cmp::min;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::env;
 use std::fs::File;
 use std::io::Write;
@@ -96,6 +96,13 @@ fn build_replacement_context(
     }
 }
 
+fn conflict(tx1: &bitcoin::Transaction, tx2: &bitcoin::Transaction) -> bool {
+    let tx1_outpoints: HashSet<bitcoin::OutPoint> = tx1.input.iter().map(|i| i.previous_output).collect();
+    let tx2_outpoints: HashSet<bitcoin::OutPoint> = tx2.input.iter().map(|i| i.previous_output).collect();
+
+    tx1_outpoints.intersection(&tx2_outpoints).count() > 0
+}
+
 fn get_reverse_fullrbf_replacements(csv_file_path: &str) -> Vec<html::ReplacementContext> {
     println!("Reading replacements from {}", csv_file_path);
     let mut rdr = csv::Reader::from_path(csv_file_path).unwrap();
@@ -108,7 +115,11 @@ fn get_reverse_fullrbf_replacements(csv_file_path: &str) -> Vec<html::Replacemen
         let replacement_tx: bitcoin::Transaction =
             bitcoin::consensus::encode::deserialize(&event.replacement_raw).unwrap();
         let optin_rbf = replaced_tx.input.iter().any(|i| i.sequence.is_rbf());
-        if !optin_rbf {
+
+        // A transaction that did not opt-in to RBF can still be replaced, if it
+        // does not directly conflict with the replacement transaction. These
+        // are not full-RBF replacements though.
+        if !optin_rbf && conflict(&replaced_tx, &replacement_tx) {
             replacements.push(build_replacement_context(
                 &event,
                 &replaced_tx,

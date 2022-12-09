@@ -223,9 +223,13 @@ pub static TEMPLATE_SITE: &str = r###"
             Showing recent full-RBF replacement events my <code>mempoolfullrbf=1</code> node saw.
         </p>
         <p>
-            I assume that a replacement is a full-RBF replacement, if the replaced transaction does not signal BIP-125 replaceability.
+            I assume that a replacement is a full-RBF replacement, if the replaced transaction does not signal BIP-125 replaceability and the replaced transaction directly conflicts with the replacement*.
             Transactions that confirmed in a block (queried from the blockstream.info API) are labeled as <span class="badge text-bg-warning">mined in X</span>.
         </p>
+        <p class="small text-muted">
+            *There are cases where a child does not signal optin-RBF, but can still be replaced if a parent is replaced. This is not a full-RBF replacement though.
+        </p>
+
     </div>
 
     <div class="mx-lg-5">
