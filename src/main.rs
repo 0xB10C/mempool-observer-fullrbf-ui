@@ -170,7 +170,9 @@ fn generate_html_files(replacements: Vec<html::ReplacementGroupContext>, html_ou
     }
 }
 
-fn build_replacement_groups(replacements: Vec<html::ReplacementContext>) -> Vec<html::ReplacementGroupContext> {
+fn build_replacement_groups(
+    replacements: Vec<html::ReplacementContext>,
+) -> Vec<html::ReplacementGroupContext> {
     let mut replacement_groups: HashMap<
         (html::TransactionContext, u64),
         Vec<html::TransactionContext>,
@@ -203,12 +205,16 @@ fn build_replacement_groups(replacements: Vec<html::ReplacementContext>) -> Vec<
             delta: html::ReplacementGroupDeltaContext {
                 fee: k.0.fee as i64 - v.iter().map(|tx| tx.fee).sum::<u64>() as i64,
                 vsize: k.0.vsize as i64 - v.iter().map(|tx| tx.vsize).sum::<u64>() as i64,
-                feerate: if v.len() > 1 { String::new() } else {format!(
-                    "+{:.2} sat/vByte",
-                    (k.0.fee as f64) / (k.0.vsize as f64)
-                        - (v.iter().map(|tx| tx.fee).sum::<u64>() as f64
-                            / v.iter().map(|tx| tx.vsize).sum::<u64>() as f64)
-                )},
+                feerate: if v.len() > 1 {
+                    String::new()
+                } else {
+                    format!(
+                        "+{:.2} sat/vByte",
+                        (k.0.fee as f64) / (k.0.vsize as f64)
+                            - (v.iter().map(|tx| tx.fee).sum::<u64>() as f64
+                                / v.iter().map(|tx| tx.vsize).sum::<u64>() as f64)
+                    )
+                },
             },
         })
         .collect();
