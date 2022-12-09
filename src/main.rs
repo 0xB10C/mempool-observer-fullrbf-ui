@@ -170,17 +170,7 @@ fn generate_html_files(replacements: Vec<html::ReplacementGroupContext>, html_ou
     }
 }
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 3 {
-        println!("Usage: {} <path/to/*.csv> <html output dir>", args[0]);
-        exit(1);
-    }
-
-    let csv_file_path = &args[1];
-    let html_output_dir = &args[2];
-
-    let replacements = get_reverse_fullrbf_replacements(csv_file_path);
+fn build_replacement_groups(replacements: Vec<html::ReplacementContext>) -> Vec<html::ReplacementGroupContext> {
     let mut replacement_groups: HashMap<
         (html::TransactionContext, u64),
         Vec<html::TransactionContext>,
@@ -224,6 +214,21 @@ fn main() {
         .collect();
     replacement_group_contexts.sort_by_key(|k| k.timestamp);
     replacement_group_contexts.reverse();
+    replacement_group_contexts
+}
+
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 3 {
+        println!("Usage: {} <path/to/*.csv> <html output dir>", args[0]);
+        exit(1);
+    }
+
+    let csv_file_path = &args[1];
+    let html_output_dir = &args[2];
+
+    let replacements = get_reverse_fullrbf_replacements(csv_file_path);
+    let replacement_group_contexts = build_replacement_groups(replacements);
 
     generate_html_files(replacement_group_contexts, html_output_dir);
     println!("Done generating pages");
