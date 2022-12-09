@@ -223,6 +223,7 @@ fn main() {
         })
         .collect();
     replacement_group_contexts.sort_by_key(|k| k.timestamp);
+    replacement_group_contexts.reverse();
 
     generate_html_files(replacement_group_contexts, html_output_dir);
     println!("Done generating pages");
