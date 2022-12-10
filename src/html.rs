@@ -115,7 +115,7 @@ pub static TEMPLATE_REPLACEMENT: &str = r#"
 <div class="card m-3 replacement-card" id="replacement-{replacement.txid}">
     <div class="card-header">
         <div class="col-12">
-            full RBF event at
+            full RBF event
             <span class="timestamp" aria-timestamp="{timestamp}">timestamp</span>
         </div>
     </div>
@@ -266,6 +266,34 @@ pub static TEMPLATE_SITE: &str = r###"
 
 <script>
 
+    // from https://blog.webdevsimplified.com/2020-07/relative-time-format/:
+
+    const formatter = new Intl.RelativeTimeFormat(undefined, \{
+        numeric: 'auto'
+    })
+
+    const DIVISIONS = [
+        \{ amount: 60, name: 'seconds' },
+        \{ amount: 60, name: 'minutes' },
+        \{ amount: 24, name: 'hours' },
+        \{ amount: 7, name: 'days' },
+        \{ amount: 4.34524, name: 'weeks' },
+        \{ amount: 12, name: 'months' },
+        \{ amount: Number.POSITIVE_INFINITY, name: 'years' }
+    ]
+
+    function formatTimeAgo(date) \{
+        let duration = (date - new Date()) / 1000
+
+        for (let i = 0; i <= DIVISIONS.length; i++) \{
+            const division = DIVISIONS[i]
+            if (Math.abs(duration) < division.amount) \{
+                return formatter.format(Math.round(duration), division.name)
+            }
+            duration /= division.amount
+        }
+    }
+
     function toggleVisibilty() \{
         let cards = document.getElementsByClassName("replacement-card");
         for (card of cards) \{
@@ -313,7 +341,7 @@ pub static TEMPLATE_SITE: &str = r###"
     const timestamps = document.getElementsByClassName("timestamp");
     for(const timestampSpan of timestamps) \{
         let date = new Date(timestampSpan.getAttribute('aria-timestamp')*1000);
-        timestampSpan.innerHTML = date.toLocaleTimeString() + " on " + date.toLocaleDateString()
+        timestampSpan.innerHTML = formatTimeAgo(date) + " (" + date.toLocaleTimeString() + " on " + date.toLocaleDateString() + ", UTC: " + timestampSpan.getAttribute('aria-timestamp') + ")"
     }
 
 </script>
