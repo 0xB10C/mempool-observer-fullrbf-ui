@@ -112,38 +112,40 @@ pub static TEMPLATE_DELTAS: &str = r#"
 "#;
 
 pub static TEMPLATE_REPLACEMENT: &str = r#"
-<div class="card-header">
-    <div class="col-12">
-        full RBF event at
-        <span class="timestamp" aria-timestamp="{timestamp}">timestamp</span>
+<div class="card m-3 replacement-card" id="replacement-{replacement.txid}">
+    <div class="card-header">
+        <div class="col-12">
+            full RBF event at
+            <span class="timestamp" aria-timestamp="{timestamp}">timestamp</span>
+        </div>
     </div>
-</div>
-<div class="card-body">
-    <div class="row">
-        <div class="col-xl-5 col-12">
-            <ul class="list-group list-group">
-                <li class="list-group-item">
-                    <span>replaced</span>
-                </li>
-                {{ for tx in replaced }}
+    <div class="card-body">
+        <div class="row">
+            <div class="col-xl-5 col-12">
+                <ul class="list-group list-group">
                     <li class="list-group-item">
-                        {{- call tmpl_transaction with tx -}}
+                        <span>replaced</span>
                     </li>
-                {{ endfor }}
-            </ul>
-        </div>
-        <div class="col-xl-2 col-12">
-            {{- call tmpl_deltas with delta -}}
-        </div>
-        <div class="col-xl-5 col-12">
-            <ul class="list-group list-group">
-                <li class="list-group-item">
-                    <span>replacement</span>
-                </li>
-                <li class="list-group-item">
-                    {{- call tmpl_transaction with replacement -}}
-                </li>
-            </ul>
+                    {{ for tx in replaced }}
+                        <li class="list-group-item">
+                            {{- call tmpl_transaction with tx -}}
+                        </li>
+                    {{ endfor }}
+                </ul>
+            </div>
+            <div class="col-xl-2 col-12">
+                {{- call tmpl_deltas with delta -}}
+            </div>
+            <div class="col-xl-5 col-12">
+                <ul class="list-group list-group">
+                    <li class="list-group-item">
+                        <span>replacement</span>
+                    </li>
+                    <li class="list-group-item">
+                        {{- call tmpl_transaction with replacement -}}
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 </div>
@@ -181,6 +183,16 @@ pub static TEMPLATE_SITE: &str = r###"
     <meta name="author" content="0xB10C">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
     <title>Recent full-RBF replacements {{ if page }}(page {page}){{ endif }} - mempool.observer</title>
+
+    <style>
+        .replacement-mined \{
+            background-color: red;
+        }
+        .replacement-card-hidden \{
+            display: none;
+        }
+    </style>
+
   </head>
   <body class="container-fluid">
 
@@ -227,6 +239,9 @@ pub static TEMPLATE_SITE: &str = r###"
             Transactions that confirmed in a block (queried from the blockstream.info API) are labeled as <span class="badge text-bg-warning">mined in X</span>.
             Clicking on the badge shows the block and the pool (if known) that mined the transaction.
             A replacement being mined could mean, that the pool has full-RBF enabled.
+            <br>
+            <label>Only show mined full-RBF replacements (on this page):</label>
+            <button class="btn btn-sm btn-warning" onclick=toggleVisibilty()>toggle</button>
         </p>
         <p class="small text-muted">
             *There are cases where a child does not signal optin-RBF, but can still be replaced if a parent is replaced. This is not a full-RBF replacement though.
@@ -236,9 +251,7 @@ pub static TEMPLATE_SITE: &str = r###"
 
     <div class="mx-lg-5">
         {{ for replacement in replacements }}
-            <div class="card m-3">
-                {{- call tmpl_replacement with replacement -}}
-            </div>
+            {{- call tmpl_replacement with replacement -}}
         {{ endfor }}
 
         {{- call tmpl_navigation with navigation -}}
@@ -252,6 +265,17 @@ pub static TEMPLATE_SITE: &str = r###"
   </footer>
 
 <script>
+
+    function toggleVisibilty() \{
+        let cards = document.getElementsByClassName("replacement-card");
+        for (card of cards) \{
+            if (card.classList.contains("replacement-card-hidden")) \{
+                card.classList.remove("replacement-card-hidden")
+            } else if (!card.classList.contains("replacement-mined")) \{
+                card.classList.add("replacement-card-hidden")
+            }
+        }
+    }
 
     const minedBadges = document.getElementsByClassName("badge-mined");
     for(const badge of minedBadges) \{
@@ -271,6 +295,12 @@ pub static TEMPLATE_SITE: &str = r###"
                         badge.classList.remove('text-bg-light');
                         badge.innerHTML = "mined in " + response.status.block_height;
                         badge.setAttribute("href", "https://miningpool.observer/template-and-block/"+response.status.block_hash)
+
+                        let maybeReplacementCard = document.getElementById("replacement-" + badge.getAttribute('aria-txid'))
+                        if (maybeReplacementCard) \{
+                            maybeReplacementCard.classList.add("replacement-mined")
+                            maybeReplacementCard.classList.add("text-bg-warning")
+                        }
                     } else \{
                         badge.innerHTML = "in blockstream.info mempool";
                         console.log(response);

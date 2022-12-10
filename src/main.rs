@@ -17,7 +17,7 @@ use rawtx_rs::bitcoin;
 use rawtx_rs::tx::TxInfo;
 use rawtx_rs::{input::InputType, output::OutputType};
 
-const REPLACEMENT_GROUPS_PER_PAGE: u32 = 50;
+const REPLACEMENT_GROUPS_PER_PAGE: u32 = 100;
 const MAX_PAGES: u32 = 10;
 
 fn in_and_outputs_to_strings(txinfo: &TxInfo) -> (Vec<String>, Vec<String>) {
