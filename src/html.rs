@@ -127,7 +127,7 @@ pub static TEMPLATE_REPLACEMENT: &str = r#"
                         <span>replaced</span>
                     </li>
                     {{ for tx in replaced }}
-                        <li class="list-group-item">
+                        <li class="list-group-item tx-replaced" aria-txid="{tx.txid}" id="tx-replaced-{tx.txid}">
                             {{- call tmpl_transaction with tx -}}
                         </li>
                     {{ endfor }}
@@ -141,7 +141,7 @@ pub static TEMPLATE_REPLACEMENT: &str = r#"
                     <li class="list-group-item">
                         <span>replacement</span>
                     </li>
-                    <li class="list-group-item">
+                    <li class="list-group-item tx-replacement" aria-txid="{replacement.txid}" id="tx-replacement-{replacement.txid}">
                         {{- call tmpl_transaction with replacement -}}
                     </li>
                 </ul>
@@ -190,6 +190,14 @@ pub static TEMPLATE_SITE: &str = r###"
         }
         .replacement-card-hidden \{
             display: none;
+        }
+        @keyframes blink \{
+            0% \{ opacity: 1; }
+            50% \{ opacity: 0.6; background-color: red; }
+            100% \{ pacity: 1; }
+        }
+        .blink \{
+            animation: blink 1s ease 0.5s 1 normal none;
         }
     </style>
 
@@ -338,6 +346,48 @@ pub static TEMPLATE_SITE: &str = r###"
                 }
             }
         );
+    }
+
+    const replacementTxns = document.getElementsByClassName("tx-replacement");
+    for(const replacementTx of replacementTxns) \{
+        let txid = replacementTx.getAttribute('aria-txid')
+        if (document.getElementById("tx-replaced-" + txid)) \{
+            let col = document.createElement("span")
+            col.classList.add("col-12")
+            col.classList.add("text-muted")
+            col.classList.add("small")
+            let col_text = document.createTextNode("this replacement transaction is replaced ")
+            let link = document.createElement("a")
+            let link_text = document.createTextNode("here")
+            link.appendChild(link_text)
+            link.setAttribute("href", "#tx-replaced-" + txid)
+            link.classList.add("text-decoration-none")
+            link.addEventListener("click", function() \{ document.getElementById("tx-replaced-" + txid).classList.add("blink") })
+            col.appendChild(col_text)
+            col.appendChild(link)
+            replacementTx.children[0].append(col)
+        }
+    }
+
+    const replacedTxns = document.getElementsByClassName("tx-replaced");
+    for(const replacedTx of replacedTxns) \{
+        let txid = replacedTx.getAttribute('aria-txid')
+        if (document.getElementById("tx-replacement-" + txid)) \{
+            let col = document.createElement("span")
+            col.classList.add("col-12")
+            col.classList.add("text-muted")
+            col.classList.add("small")
+            let col_text = document.createTextNode("this replaced transaction is also a replacement ")
+            let link = document.createElement("a")
+            let link_text = document.createTextNode("here")
+            link.appendChild(link_text)
+            link.setAttribute("href", "#tx-replacement-" + txid)
+            link.classList.add("text-decoration-none")
+            link.addEventListener("click", function() \{ document.getElementById("tx-replacement-" + txid).classList.add("blink") });
+            col.appendChild(col_text)
+            col.appendChild(link)
+            replacedTx.children[0].append(col)
+        }
     }
 
     const timestamps = document.getElementsByClassName("timestamp");
