@@ -250,6 +250,8 @@ pub static TEMPLATE_SITE: &str = r###"
     </div>
 
     <div class="mx-lg-5">
+        {{- call tmpl_navigation with navigation -}}
+
         {{ for replacement in replacements }}
             {{- call tmpl_replacement with replacement -}}
         {{ endfor }}
