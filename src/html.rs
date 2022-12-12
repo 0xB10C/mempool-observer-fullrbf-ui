@@ -9,6 +9,7 @@ pub struct TransactionContext {
     pub vsize: u64,
     pub feerate: String,
     pub raw: String,
+    pub time_in_mempool: i64,
     pub inputs: Vec<String>,
     pub outputs: Vec<String>,
     pub op_return: bool,
@@ -81,7 +82,11 @@ pub static TEMPLATE_TX: &str = r###"
             <span class="col-md-2 col-4 text-muted">feerate</span><span class="col-md-4 col-8">{feerate} sat/vByte</span>
             <span class="col-md-2 col-4 text-muted">fee</span><span class="col-md-4 col-8">{fee} sat</span>
             <span class="col-md-2 col-4 text-muted">vsize</span><span class="col-md-4 col-8">{vsize} vByte</span>
-            <span class="col-md-2 col-4 text-muted"></span><span class="col-md-4 col-8"></span>
+            {{ if time_in_mempool }}
+                <span class="col-md-2 col-4 text-muted">time in mempool</span><span class="col-md-4 col-8">{time_in_mempool} seconds</span>
+            {{ else }}
+                <span class="col-md-2 col-4 text-muted"></span><span class="col-md-4 col-8"></span>
+            {{ endif }}
             <span class="col-md-2 col-4 text-muted">inputs</span><span class="col-md-10 col-8">{{ for input in inputs }}{input}{{ if not @last }}, {{ endif }}{{ endfor }}</span>
             <span class="col-md-2 col-4 text-muted">outputs</span><span class="col-md-10 col-8">{{ for output in outputs }}{output}{{ if not @last }}, {{ endif }}{{ endfor }}</span>
         </div>

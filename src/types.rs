@@ -14,6 +14,7 @@ pub struct RBFEvent {
     pub replaced_txid: [u8; TXID_LENGTH],
     pub replaced_fee: u64,
     pub replaced_vsize: u64,
+    pub replaced_entry_time: u64,
     #[serde(
         deserialize_with = "hex::serde::deserialize",
         serialize_with = "hex::serde::serialize"
